@@ -25,6 +25,7 @@ const THEME_STORAGE_KEY = 'devices.theme';
 const SUPPORTED_THEMES = ['auto', 'dark', 'light'];
 const systemThemeQuery = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-color-scheme: light)') : null;
 let currentThemeMode = 'auto';
+let systemThemeCleanup = null;
 
 function setPageStatus(text, cls = 'status-idle') {
     $pageStatus.textContent = text;
@@ -106,6 +107,27 @@ function applyTheme(mode) {
         } catch {}
     }
     syncMenuState();
+}
+
+function subscribeSystemThemeChanges() {
+    if (!systemThemeQuery) return;
+
+    const onThemeChange = () => {
+        if (currentThemeMode === 'auto') {
+            document.documentElement.setAttribute('data-theme', getSystemTheme());
+        }
+    };
+
+    if (typeof systemThemeQuery.addEventListener === 'function') {
+        systemThemeQuery.addEventListener('change', onThemeChange);
+        systemThemeCleanup = () => systemThemeQuery.removeEventListener?.('change', onThemeChange);
+        return;
+    }
+
+    if (typeof systemThemeQuery.addListener === 'function') {
+        systemThemeQuery.addListener(onThemeChange);
+        systemThemeCleanup = () => systemThemeQuery.removeListener?.(onThemeChange);
+    }
 }
 
 function refreshUiTexts() {
@@ -316,6 +338,8 @@ function openDetailsDialog(deviceId) {
 }
 
 function init() {
+    systemThemeCleanup?.();
+    systemThemeCleanup = null;
     applyTheme(resolveInitialTheme());
     applyStaticTranslations();
     setPageStatus(t('status.ready'), 'status-idle');
@@ -367,11 +391,7 @@ function init() {
             closeAllMenus();
         }
     });
-    systemThemeQuery?.addEventListener('change', () => {
-        if (currentThemeMode === 'auto') {
-            document.documentElement.setAttribute('data-theme', getSystemTheme());
-        }
-    });
+    subscribeSystemThemeChanges();
     renderConnectedDevicesTable();
     $connectAnyBtn?.addEventListener('click', connectAnySupportedDevice);
     $devicesList?.addEventListener('click', (event) => {
