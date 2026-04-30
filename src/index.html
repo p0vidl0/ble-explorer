@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#111827" />
+        <title data-i18n="app.title">BLE Devices</title>
+        <style>
+            :root {
+                color-scheme: dark;
+                --bg-main: #0b1020;
+                --text-main: #f3f4f6;
+                --text-muted: #9ca3af;
+                --btn-primary: #2563eb;
+                --btn-danger: #dc2626;
+                --btn-secondary: #374151;
+                --select-border: rgba(255, 255, 255, 0.2);
+                --select-bg: rgba(255, 255, 255, 0.08);
+                --panel-bg: rgba(255, 255, 255, 0.06);
+                --panel-border: rgba(255, 255, 255, 0.08);
+                --empty-border: rgba(255, 255, 255, 0.2);
+                --dialog-bg: #0f172a;
+                --dialog-border: rgba(255, 255, 255, 0.2);
+                --table-bg: rgba(255, 255, 255, 0.03);
+                --table-border: rgba(255, 255, 255, 0.08);
+                --table-head-bg: rgba(255, 255, 255, 0.04);
+                --table-head-border: rgba(255, 255, 255, 0.12);
+                --backdrop-bg: rgba(0, 0, 0, 0.55);
+            }
+            :root[data-theme="light"] {
+                color-scheme: light;
+                --bg-main: #f3f4f6;
+                --text-main: #111827;
+                --text-muted: #4b5563;
+                --btn-primary: #2563eb;
+                --btn-danger: #dc2626;
+                --btn-secondary: #6b7280;
+                --select-border: rgba(0, 0, 0, 0.2);
+                --select-bg: #ffffff;
+                --panel-bg: #ffffff;
+                --panel-border: rgba(0, 0, 0, 0.12);
+                --empty-border: rgba(0, 0, 0, 0.22);
+                --dialog-bg: #ffffff;
+                --dialog-border: rgba(0, 0, 0, 0.2);
+                --table-bg: #f9fafb;
+                --table-border: rgba(0, 0, 0, 0.08);
+                --table-head-bg: #eef2ff;
+                --table-head-border: rgba(0, 0, 0, 0.12);
+                --backdrop-bg: rgba(0, 0, 0, 0.25);
+            }
+            body {
+                margin: 0;
+                font-family: Roboto, system-ui, sans-serif;
+                background: var(--bg-main);
+                color: var(--text-main);
+            }
+            .wrapper {
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 1.5rem;
+                position: relative;
+            }
+            .devices-title {
+                margin: 0 0 0.5rem;
+                font-size: 2rem;
+            }
+            .devices-subtitle {
+                margin: 0 0 1rem;
+                opacity: 0.85;
+            }
+            .devices-status {
+                margin: 0 0 1rem;
+                font-weight: 700;
+            }
+            .status-idle { color: var(--text-muted); }
+            .status-connecting { color: #fbbf24; }
+            .status-ok { color: #34d399; }
+            .status-error { color: #f87171; }
+            .btn {
+                border: 0;
+                border-radius: 10px;
+                padding: 0.55rem 0.9rem;
+                color: #fff;
+                cursor: pointer;
+                font-weight: 700;
+            }
+            .btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            .btn.primary { background: var(--btn-primary); }
+            .btn.danger { background: var(--btn-danger); }
+            .btn.secondary { background: var(--btn-secondary); }
+            .devices-actions {
+                margin-bottom: 1.2rem;
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+            .controls-group {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+            .top-right-controls {
+                position: absolute;
+                top: 1.5rem;
+                right: 1.5rem;
+                display: flex;
+                justify-content: flex-end;
+            }
+            .locale-switcher,
+            .theme-switcher {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                opacity: 0.9;
+            }
+            .control-icon {
+                font-size: 1.05rem;
+                line-height: 1;
+            }
+            .sr-only {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                padding: 0;
+                margin: -1px;
+                overflow: hidden;
+                clip: rect(0, 0, 0, 0);
+                white-space: nowrap;
+                border: 0;
+            }
+            .menu-trigger {
+                border: 1px solid var(--select-border);
+                border-radius: 8px;
+                background: var(--select-bg);
+                color: var(--text-main);
+                padding: 0.35rem;
+                cursor: pointer;
+                width: 2rem;
+                height: 2rem;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .popup-menu-wrap {
+                position: relative;
+            }
+            .popup-menu {
+                position: absolute;
+                top: calc(100% + 0.35rem);
+                right: 0;
+                min-width: 140px;
+                display: none;
+                flex-direction: column;
+                border: 1px solid var(--select-border);
+                border-radius: 8px;
+                background: var(--dialog-bg);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                padding: 0.3rem;
+                z-index: 20;
+            }
+            .popup-menu.open {
+                display: flex;
+            }
+            .popup-menu-item {
+                border: 0;
+                background: transparent;
+                color: var(--text-main);
+                text-align: left;
+                padding: 0.4rem 0.5rem;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+            .popup-menu-item:hover,
+            .popup-menu-item[aria-current="true"] {
+                background: var(--table-head-bg);
+            }
+            @media (max-width: 640px) {
+                .top-right-controls {
+                    position: static;
+                    margin: 0 0 0.75rem;
+                    justify-content: flex-start;
+                }
+            }
+            .devices-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 0.75rem;
+            }
+            .device-card {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 12px;
+                padding: 0.85rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.55rem;
+            }
+            .device-card-name {
+                margin: 0;
+                font-size: 1rem;
+                line-height: 1.25;
+            }
+            .device-card-type {
+                margin: 0;
+                opacity: 0.85;
+            }
+            .devices-empty {
+                opacity: 0.8;
+                background: var(--panel-bg);
+                border: 1px dashed var(--empty-border);
+                border-radius: 12px;
+                padding: 1rem;
+            }
+            .row-actions {
+                display: flex;
+                gap: 0.45rem;
+                flex-wrap: wrap;
+            }
+            .device-card-meta {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.35rem;
+                font-size: 0.92rem;
+            }
+            .device-card-meta-key {
+                opacity: 0.8;
+            }
+            dialog.device-details-dialog {
+                border: 1px solid var(--dialog-border);
+                border-radius: 12px;
+                background: var(--dialog-bg);
+                color: var(--text-main);
+                width: min(680px, calc(100vw - 2rem));
+                padding: 1rem;
+            }
+            dialog.device-details-dialog::backdrop {
+                background: var(--backdrop-bg);
+            }
+            .details-title {
+                margin: 0 0 0.7rem;
+            }
+            .details-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 0 0 1rem;
+                background: var(--table-bg);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .details-tables {
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                margin: 0 0 1rem;
+            }
+            .details-table td {
+                padding: 0.6rem 0.75rem;
+                border-bottom: 1px solid var(--table-border);
+                vertical-align: top;
+            }
+            .details-table tr:last-child td {
+                border-bottom: 0;
+            }
+            .details-key {
+                width: 42%;
+                opacity: 0.85;
+            }
+            .details-table th {
+                text-align: left;
+                padding: 0.6rem 0.75rem;
+                border-bottom: 1px solid var(--table-head-border);
+                background: var(--table-head-bg);
+            }
+            .details-close {
+                display: flex;
+                justify-content: flex-end;
+            }
+        </style>
+    </head>
+    <body>
+        <main class="wrapper">
+            <div class="top-right-controls">
+                <div class="controls-group">
+                    <div class="locale-switcher popup-menu-wrap">
+                        <span class="sr-only" data-i18n="locale.label">Язык</span>
+                        <button id="locale-menu-trigger" class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Language">
+                            🌐
+                        </button>
+                        <div id="locale-menu" class="popup-menu" role="menu" aria-label="Language"></div>
+                    </div>
+                    <div class="theme-switcher popup-menu-wrap">
+                        <span class="sr-only" data-i18n="theme.label">Тема</span>
+                        <button id="theme-menu-trigger" class="menu-trigger" type="button" aria-haspopup="true" aria-expanded="false" aria-label="Theme">
+                            🌓
+                        </button>
+                        <div id="theme-menu" class="popup-menu" role="menu" aria-label="Theme"></div>
+                    </div>
+                </div>
+            </div>
+            <h1 class="devices-title" data-i18n="heading.connectedDevices">Подключенные BLE устройства</h1>
+            <p id="page-status" class="devices-status status-idle" data-i18n="status.ready">Готово к подключению устройств</p>
+            <div class="devices-actions">
+                <button id="connect-any-btn" class="btn primary" data-i18n="actions.connectAny">Найти поддерживаемое устройство</button>
+            </div>
+            <section id="devices-list" class="devices-grid">
+                <div id="devices-empty-row" class="devices-empty" data-i18n="list.empty">Подключенных устройств пока нет</div>
+            </section>
+        </main>
+        <dialog id="device-details-dialog" class="device-details-dialog">
+            <h2 id="details-title" class="details-title" data-i18n="details.dialogTitleDefault">Детали устройства</h2>
+            <div class="details-tables">
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="details.table.details">Детали</th>
+                            <th data-i18n="details.table.value">Значение</th>
+                        </tr>
+                    </thead>
+                    <tbody id="details-keys-tbody"></tbody>
+                </table>
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="details.table.metric">Параметр</th>
+                            <th data-i18n="details.table.value">Значение</th>
+                        </tr>
+                    </thead>
+                    <tbody id="details-values-tbody"></tbody>
+                </table>
+            </div>
+            <div class="details-close">
+                <button id="details-close-btn" class="btn secondary" data-i18n="actions.close">Закрыть</button>
+            </div>
+        </dialog>
+        <script type="module" src="./index.js"></script>
+    </body>
+</html>
