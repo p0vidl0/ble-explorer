@@ -24,6 +24,19 @@ const characteristics = {
 
 const uuids = { ...services, ...characteristics };
 
+function getAvailabilityStatus() {
+    if (typeof navigator === 'undefined') {
+        return { available: false, reason: 'noNavigator' };
+    }
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+        return { available: false, reason: 'insecureContext' };
+    }
+    if (!('bluetooth' in navigator)) {
+        return { available: false, reason: 'apiMissing' };
+    }
+    return { available: true, reason: 'ok' };
+}
+
 function genericFilters() {
     return [
         { services: [uuids.fitnessMachine] },
@@ -72,7 +85,11 @@ async function generic() {
 
 const webBle = Object.freeze({
     isAvailable() {
-        return typeof navigator !== 'undefined' && 'bluetooth' in navigator;
+        return getAvailabilityStatus().available;
+    },
+    getAvailabilityStatus,
+    getUnavailableReason() {
+        return getAvailabilityStatus().reason;
     },
     filters: Object.freeze({
         generic,

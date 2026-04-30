@@ -20,6 +20,14 @@ const $localeMenuTrigger = document.querySelector('#locale-menu-trigger');
 const $localeMenu = document.querySelector('#locale-menu');
 const $themeMenuTrigger = document.querySelector('#theme-menu-trigger');
 const $themeMenu = document.querySelector('#theme-menu');
+const $diagnosticsOpenBtn = document.querySelector('#diagnostics-open-btn');
+const $diagnosticsDialog = document.querySelector('#diagnostics-dialog');
+const $diagnosticsCloseBtn = document.querySelector('#diagnostics-close-btn');
+const $diagnosticsCopyBtn = document.querySelector('#diagnostics-copy-btn');
+const $diagSecureContext = document.querySelector('#diag-secure-context');
+const $diagBluetoothApi = document.querySelector('#diag-bluetooth-api');
+const $diagWebBleAvailability = document.querySelector('#diag-webble-availability');
+const $diagUserAgent = document.querySelector('#diag-user-agent');
 let activeDetailsDeviceId = null;
 const THEME_STORAGE_KEY = 'devices.theme';
 const SUPPORTED_THEMES = ['auto', 'dark', 'light'];
@@ -38,6 +46,44 @@ function applyStaticTranslations() {
         if (!key) return;
         element.textContent = t(key);
     });
+}
+
+function boolText(value) {
+    return value ? t('diagnostics.yes') : t('diagnostics.no');
+}
+
+function renderDiagnostics() {
+    const status = webBle.getAvailabilityStatus?.() ?? { available: webBle.isAvailable(), reason: 'unknown' };
+    const secureContext = typeof window !== 'undefined' ? window.isSecureContext === true : false;
+    const hasBluetoothApi = typeof navigator !== 'undefined' && 'bluetooth' in navigator;
+
+    if ($diagSecureContext) {
+        $diagSecureContext.textContent = boolText(secureContext);
+    }
+    if ($diagBluetoothApi) {
+        $diagBluetoothApi.textContent = boolText(hasBluetoothApi);
+    }
+    if ($diagWebBleAvailability) {
+        $diagWebBleAvailability.textContent = `${boolText(status.available)} (${status.reason})`;
+    }
+    if ($diagUserAgent) {
+        $diagUserAgent.textContent = typeof navigator !== 'undefined' && navigator.userAgent
+            ? navigator.userAgent
+            : '--';
+    }
+}
+
+function buildDiagnosticsText() {
+    const status = webBle.getAvailabilityStatus?.() ?? { available: webBle.isAvailable(), reason: 'unknown' };
+    const secureContext = typeof window !== 'undefined' ? window.isSecureContext === true : false;
+    const hasBluetoothApi = typeof navigator !== 'undefined' && 'bluetooth' in navigator;
+    const userAgent = typeof navigator !== 'undefined' && navigator.userAgent ? navigator.userAgent : '--';
+    return [
+        `${t('diagnostics.secureContext')}: ${boolText(secureContext)}`,
+        `${t('diagnostics.bluetoothApi')}: ${boolText(hasBluetoothApi)}`,
+        `${t('diagnostics.availability')}: ${boolText(status.available)} (${status.reason})`,
+        `${t('diagnostics.userAgent')}: ${userAgent}`,
+    ].join('\n');
 }
 
 function renderLocaleOptions() {
@@ -132,6 +178,7 @@ function subscribeSystemThemeChanges() {
 
 function refreshUiTexts() {
     applyStaticTranslations();
+    renderDiagnostics();
     renderLocaleOptions();
     renderThemeOptions();
     syncMenuState();
@@ -239,7 +286,12 @@ function attachDisconnectHandler(device, fallbackTitle) {
 
 async function connectAnySupportedDevice() {
     if (!webBle.isAvailable()) {
-        setPageStatus(t('status.webBluetoothUnavailable'), 'status-error');
+        const reason = webBle.getUnavailableReason?.();
+        const reasonKey = reason ? `status.webBluetoothUnavailable.${reason}` : null;
+        const text = reasonKey && t(reasonKey) !== reasonKey
+            ? t(reasonKey)
+            : t('status.webBluetoothUnavailable');
+        setPageStatus(text, 'status-error');
         return;
     }
 
@@ -342,6 +394,7 @@ function init() {
     systemThemeCleanup = null;
     applyTheme(resolveInitialTheme());
     applyStaticTranslations();
+    renderDiagnostics();
     setPageStatus(t('status.ready'), 'status-idle');
     renderLocaleOptions();
     renderThemeOptions();
@@ -382,6 +435,36 @@ function init() {
         if (!theme) return;
         applyTheme(theme);
         closeAllMenus();
+    });
+    $diagnosticsOpenBtn?.addEventListener('click', () => {
+        renderDiagnostics();
+        $diagnosticsDialog?.showModal();
+    });
+    $diagnosticsCloseBtn?.addEventListener('click', () => {
+        $diagnosticsDialog?.close();
+    });
+    $diagnosticsCopyBtn?.addEventListener('click', async () => {
+        const text = buildDiagnosticsText();
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+                setPageStatus(t('diagnostics.copied'), 'status-idle');
+                return;
+            }
+        } catch {}
+        const fallback = document.createElement('textarea');
+        fallback.value = text;
+        fallback.setAttribute('readonly', '');
+        fallback.style.position = 'absolute';
+        fallback.style.left = '-9999px';
+        document.body.appendChild(fallback);
+        fallback.select();
+        try {
+            document.execCommand('copy');
+            setPageStatus(t('diagnostics.copied'), 'status-idle');
+        } finally {
+            document.body.removeChild(fallback);
+        }
     });
     document.addEventListener('click', () => {
         closeAllMenus();
@@ -424,6 +507,16 @@ function init() {
             && event.clientY <= rect.bottom;
         if (!clickedInside) {
             $detailsDialog.close();
+        }
+    });
+    $diagnosticsDialog?.addEventListener('click', (event) => {
+        const rect = $diagnosticsDialog.getBoundingClientRect();
+        const clickedInside = event.clientX >= rect.left
+            && event.clientX <= rect.right
+            && event.clientY >= rect.top
+            && event.clientY <= rect.bottom;
+        if (!clickedInside) {
+            $diagnosticsDialog.close();
         }
     });
 }

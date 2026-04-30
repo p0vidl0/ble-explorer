@@ -72,6 +72,23 @@
                 margin: 0 0 1rem;
                 font-weight: 700;
             }
+            .diag-title {
+                margin: 0 0 0.4rem;
+                font-weight: 700;
+            }
+            .diag-grid {
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 0.25rem 0.6rem;
+                margin: 0;
+            }
+            .diag-grid dt {
+                opacity: 0.8;
+            }
+            .diag-grid dd {
+                margin: 0;
+                word-break: break-word;
+            }
             .status-idle { color: var(--text-muted); }
             .status-connecting { color: #fbbf24; }
             .status-ok { color: #34d399; }
@@ -183,7 +200,7 @@
                 .top-right-controls {
                     position: static;
                     margin: 0 0 0.75rem;
-                    justify-content: flex-start;
+                    justify-content: flex-end;
                 }
             }
             .devices-grid {
@@ -279,6 +296,7 @@
             .details-close {
                 display: flex;
                 justify-content: flex-end;
+                gap: 0.5rem;
             }
         </style>
     </head>
@@ -299,6 +317,12 @@
                             🌓
                         </button>
                         <div id="theme-menu" class="popup-menu" role="menu" aria-label="Theme"></div>
+                    </div>
+                    <div class="popup-menu-wrap">
+                        <span class="sr-only" data-i18n="diagnostics.title">Диагностика</span>
+                        <button id="diagnostics-open-btn" class="menu-trigger" type="button" aria-label="Diagnostics">
+                            🧪
+                        </button>
                     </div>
                 </div>
             </div>
@@ -335,6 +359,23 @@
             </div>
             <div class="details-close">
                 <button id="details-close-btn" class="btn secondary" data-i18n="actions.close">Закрыть</button>
+            </div>
+        </dialog>
+        <dialog id="diagnostics-dialog" class="device-details-dialog">
+            <h2 class="details-title" data-i18n="diagnostics.title">Диагностика</h2>
+            <dl class="diag-grid">
+                <dt data-i18n="diagnostics.secureContext">Secure context</dt>
+                <dd id="diag-secure-context">--</dd>
+                <dt data-i18n="diagnostics.bluetoothApi">Bluetooth API</dt>
+                <dd id="diag-bluetooth-api">--</dd>
+                <dt data-i18n="diagnostics.availability">Web BLE</dt>
+                <dd id="diag-webble-availability">--</dd>
+                <dt data-i18n="diagnostics.userAgent">User agent</dt>
+                <dd id="diag-user-agent">--</dd>
+            </dl>
+            <div class="details-close">
+                <button id="diagnostics-copy-btn" class="btn secondary" data-i18n="actions.copyDiagnostics">Скопировать</button>
+                <button id="diagnostics-close-btn" class="btn secondary" data-i18n="actions.close">Закрыть</button>
             </div>
         </dialog>
         <script type="module" src="./index.js"></script>
