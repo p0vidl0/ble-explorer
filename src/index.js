@@ -1,7 +1,7 @@
 import { webBle, uuids } from './lib/web-ble.js';
-import { decodeCyclingPowerMeasurement, decodeHeartRateMeasurement } from './ble/decoders.js';
+import { decodeCscMeasurement, decodeCyclingPowerMeasurement, decodeHeartRateMeasurement } from './ble/decoders.js';
 import { detectDeviceType, readOptionalInfo } from './ble/device-info.js';
-import { applyHeartRateUpdate, applyPowerMeterUpdate } from './ble/device-updates.js';
+import { applyHeartRateUpdate, applyPowerMeterUpdate, applySpeedCadenceUpdate } from './ble/device-updates.js';
 import { buildLiveValuesRows, buildStaticDetailsRows } from './ui/details.js';
 import { getLocale, getSupportedLocales, setLocale, t } from './i18n.js';
 
@@ -268,6 +268,35 @@ async function subscribePowerMeterUpdates(entry, server) {
     }
 }
 
+async function subscribeSpeedCadenceUpdates(entry, server) {
+    try {
+        const cscService = await server.getPrimaryService(uuids.speedCadence);
+        const cscCharacteristic = await cscService.getCharacteristic(uuids.cscMeasurement);
+        await cscCharacteristic.startNotifications();
+
+        cscCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+            const value = event.target?.value;
+            if (!value) return;
+
+            const current = connectedDevices.get(entry.deviceId);
+            if (!current) return;
+
+            const decoded = decodeCscMeasurement(value, {
+                wheel: current._prevWheel,
+                crank: current._prevCscCrank,
+            });
+            connectedDevices.set(entry.deviceId, applySpeedCadenceUpdate(current, decoded));
+
+            renderConnectedDevicesTable();
+            if (activeDetailsDeviceId === entry.deviceId) {
+                renderDetailsDialog(entry.deviceId);
+            }
+        });
+    } catch (err) {
+        console.warn('Speed/Cadence notifications are not available:', err);
+    }
+}
+
 function removeConnectedDevice(deviceId) {
     if (activeDetailsDeviceId === deviceId) {
         activeDetailsDeviceId = null;
@@ -324,11 +353,14 @@ async function connectAnySupportedDevice() {
             heartRate: '--',
             rrInterval: '--',
             power: '--',
+            speed: '--',
             cadence: '--',
             manufacturer: info.manufacturer,
             model: info.model,
             firmware: info.firmware,
             _prevCrank: null,
+            _prevWheel: null,
+            _prevCscCrank: null,
             device,
         });
         if (definition.id === 'heartRateMonitor') {
@@ -336,6 +368,9 @@ async function connectAnySupportedDevice() {
         }
         if (definition.id === 'powerMeter') {
             await subscribePowerMeterUpdates({ deviceId: device.id }, server);
+        }
+        if (definition.id === 'speedCadenceSensor') {
+            await subscribeSpeedCadenceUpdates({ deviceId: device.id }, server);
         }
         renderConnectedDevicesTable();
         setPageStatus(

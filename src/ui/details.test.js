@@ -4,6 +4,7 @@ import {
     buildStaticDetailsRows,
     getTypeSpecificDetails,
     supportsHeartDetails,
+    supportsSpeedCadenceDetails,
 } from './details.js';
 import { setLocale } from '../i18n.js';
 
@@ -40,6 +41,16 @@ describe('supportsHeartDetails', () => {
     });
 });
 
+describe('supportsSpeedCadenceDetails', () => {
+    it('returns true for speed/cadence sensor type', () => {
+        expect(supportsSpeedCadenceDetails({ typeId: 'speedCadenceSensor', speed: '--', cadence: '--' })).toBe(true);
+    });
+
+    it('returns false for power meter without dedicated speed metric', () => {
+        expect(supportsSpeedCadenceDetails({ typeId: 'powerMeter', speed: '--', cadence: '90 rpm' })).toBe(false);
+    });
+});
+
 describe('buildStaticDetailsRows', () => {
     it('combines generic and type-specific rows', () => {
         const entry = {
@@ -68,6 +79,7 @@ describe('buildLiveValuesRows', () => {
         const rows = buildLiveValuesRows({
             typeId: 'coreTemp',
             power: '--',
+            speed: '--',
             cadence: '--',
             heartRate: '--',
             rrInterval: '--',
@@ -79,6 +91,7 @@ describe('buildLiveValuesRows', () => {
         const rows = buildLiveValuesRows({
             typeId: 'powerMeter',
             power: '280 W',
+            speed: '--',
             cadence: '92 rpm',
             heartRate: '--',
             rrInterval: '--',
@@ -88,10 +101,27 @@ describe('buildLiveValuesRows', () => {
         expect(rows).toContainEqual({ key: 'Каденс', value: '92 rpm' });
     });
 
+    it('includes speed/cadence rows for speed-cadence sensor', () => {
+        const rows = buildLiveValuesRows({
+            typeId: 'speedCadenceSensor',
+            power: '--',
+            speed: '35.2 km/h',
+            cadence: '90 rpm',
+            heartRate: '--',
+            rrInterval: '--',
+        });
+
+        expect(rows).toContainEqual({ key: 'Скорость', value: '35.2 km/h' });
+        expect(rows).toContainEqual({ key: 'Каденс', value: '90 rpm' });
+        expect(rows).not.toContainEqual({ key: 'Мощность', value: '--' });
+        expect(rows.filter((row) => row.key === 'Каденс')).toHaveLength(1);
+    });
+
     it('includes heart rows when metrics available', () => {
         const rows = buildLiveValuesRows({
             typeId: 'smo2',
             power: '--',
+            speed: '--',
             cadence: '--',
             heartRate: '150',
             rrInterval: '800 ms',
@@ -106,6 +136,7 @@ describe('buildLiveValuesRows', () => {
         const rows = buildLiveValuesRows({
             typeId: 'coreTemp',
             power: '--',
+            speed: '--',
             cadence: '--',
             heartRate: '--',
             rrInterval: '--',

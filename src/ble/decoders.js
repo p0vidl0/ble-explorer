@@ -76,3 +76,80 @@ export function decodeCyclingPowerMeasurement(dataview, prev) {
         nextPrev,
     };
 }
+
+export function decodeCscMeasurement(dataview, prev = {}) {
+    const flags = dataview.getUint8(0, true);
+    const wheelDataPresent = (flags & 0b00000001) !== 0;
+    const crankDataPresent = (flags & 0b00000010) !== 0;
+
+    let i = 1;
+    let speedKmh = null;
+    let cadence = null;
+    let nextPrevWheel = prev.wheel ?? null;
+    let nextPrevCrank = prev.crank ?? null;
+
+    if (wheelDataPresent && dataview.byteLength >= i + 6) {
+        const cumulativeWheelRevolutions = dataview.getUint32(i, true);
+        i += 4;
+        const lastWheelEventTime = dataview.getUint16(i, true);
+        i += 2;
+
+        if (prev.wheel) {
+            let deltaRevs = cumulativeWheelRevolutions - prev.wheel.cumulativeWheelRevolutions;
+            let deltaTime = lastWheelEventTime - prev.wheel.lastWheelEventTime;
+
+            if (deltaRevs < 0) {
+                deltaRevs += 2 ** 32;
+            }
+            if (deltaTime < 0) {
+                deltaTime += 2 ** 16;
+            }
+
+            if (deltaTime > 0) {
+                const wheelCircumferenceMeters = 2.105;
+                const metersPerSecond = (deltaRevs * wheelCircumferenceMeters) / (deltaTime / 1024);
+                speedKmh = metersPerSecond * 3.6;
+            }
+        }
+
+        nextPrevWheel = {
+            cumulativeWheelRevolutions,
+            lastWheelEventTime,
+        };
+    }
+
+    if (crankDataPresent && dataview.byteLength >= i + 4) {
+        const cumulativeCrankRevolutions = dataview.getUint16(i, true);
+        i += 2;
+        const lastCrankEventTime = dataview.getUint16(i, true);
+
+        if (prev.crank) {
+            let deltaRevs = cumulativeCrankRevolutions - prev.crank.cumulativeCrankRevolutions;
+            let deltaTime = lastCrankEventTime - prev.crank.lastCrankEventTime;
+
+            if (deltaRevs < 0) {
+                deltaRevs += 2 ** 16;
+            }
+            if (deltaTime < 0) {
+                deltaTime += 2 ** 16;
+            }
+
+            if (deltaTime > 0) {
+                const revPerSec = deltaRevs / (deltaTime / 1024);
+                cadence = Math.round(revPerSec * 60);
+            }
+        }
+
+        nextPrevCrank = {
+            cumulativeCrankRevolutions,
+            lastCrankEventTime,
+        };
+    }
+
+    return {
+        speedKmh,
+        cadence,
+        nextPrevWheel,
+        nextPrevCrank,
+    };
+}

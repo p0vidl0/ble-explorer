@@ -41,6 +41,12 @@ export function supportsHeartDetails(entry) {
     return entry.typeId === 'heartRateMonitor' || entry.heartRate !== '--' || entry.rrInterval !== '--';
 }
 
+export function supportsSpeedCadenceDetails(entry) {
+    return entry.typeId === 'speedCadenceSensor'
+        || entry.speed !== '--'
+        || (entry.typeId !== 'powerMeter' && entry.cadence !== '--');
+}
+
 export function buildStaticDetailsRows(entry) {
     return [
         { key: t('details.deviceType'), value: entry.typeTitle },
@@ -55,9 +61,16 @@ export function buildStaticDetailsRows(entry) {
 export function buildLiveValuesRows(entry) {
     const rows = [];
 
-    if (entry.typeId === 'powerMeter' || entry.power !== '--' || entry.cadence !== '--') {
+    if (entry.typeId === 'powerMeter' || entry.power !== '--') {
         rows.push(
             { key: t('details.power'), value: entry.power ?? '--' },
+            { key: t('details.cadence'), value: entry.cadence ?? '--' },
+        );
+    }
+
+    if (supportsSpeedCadenceDetails(entry)) {
+        rows.push(
+            { key: t('details.speed'), value: entry.speed ?? '--' },
             { key: t('details.cadence'), value: entry.cadence ?? '--' },
         );
     }

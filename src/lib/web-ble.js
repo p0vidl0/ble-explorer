@@ -17,6 +17,7 @@ const characteristics = {
     batteryLevel: '00002a19-0000-1000-8000-00805f9b34fb',
     heartRateMeasurement: '00002a37-0000-1000-8000-00805f9b34fb',
     cyclingPowerMeasurement: '00002a63-0000-1000-8000-00805f9b34fb',
+    cscMeasurement: '00002a5b-0000-1000-8000-00805f9b34fb',
     manufacturerNameString: '00002a29-0000-1000-8000-00805f9b34fb',
     modelNumberString: '00002a24-0000-1000-8000-00805f9b34fb',
     firmwareRevisionString: '00002a26-0000-1000-8000-00805f9b34fb',

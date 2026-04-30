@@ -14,3 +14,13 @@ export function applyPowerMeterUpdate(current, decoded) {
         _prevCrank: decoded.nextPrev,
     };
 }
+
+export function applySpeedCadenceUpdate(current, decoded) {
+    return {
+        ...current,
+        speed: Number.isFinite(decoded.speedKmh) ? `${decoded.speedKmh.toFixed(1)} km/h` : current.speed,
+        cadence: Number.isFinite(decoded.cadence) ? `${decoded.cadence} rpm` : current.cadence,
+        _prevWheel: decoded.nextPrevWheel,
+        _prevCscCrank: decoded.nextPrevCrank,
+    };
+}

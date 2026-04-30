@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyHeartRateUpdate, applyPowerMeterUpdate } from './device-updates.js';
+import { applyHeartRateUpdate, applyPowerMeterUpdate, applySpeedCadenceUpdate } from './device-updates.js';
 
 describe('applyHeartRateUpdate', () => {
     it('applies heart rate and rr interval values', () => {
@@ -46,5 +46,34 @@ describe('applyPowerMeterUpdate', () => {
 
         expect(next.power).toBe('220 W');
         expect(next.cadence).toBe('88 rpm');
+    });
+});
+
+describe('applySpeedCadenceUpdate', () => {
+    it('formats speed/cadence and stores previous counters', () => {
+        const current = { speed: '--', cadence: '--' };
+        const decoded = {
+            speedKmh: 32.27,
+            cadence: 88,
+            nextPrevWheel: { cumulativeWheelRevolutions: 1000, lastWheelEventTime: 2048 },
+            nextPrevCrank: { cumulativeCrankRevolutions: 210, lastCrankEventTime: 4096 },
+        };
+
+        const next = applySpeedCadenceUpdate(current, decoded);
+
+        expect(next.speed).toBe('32.3 km/h');
+        expect(next.cadence).toBe('88 rpm');
+        expect(next._prevWheel).toEqual(decoded.nextPrevWheel);
+        expect(next._prevCscCrank).toEqual(decoded.nextPrevCrank);
+    });
+
+    it('keeps previous values when decoded metrics are missing', () => {
+        const current = { speed: '30.0 km/h', cadence: '91 rpm' };
+        const decoded = { speedKmh: null, cadence: null, nextPrevWheel: null, nextPrevCrank: null };
+
+        const next = applySpeedCadenceUpdate(current, decoded);
+
+        expect(next.speed).toBe('30.0 km/h');
+        expect(next.cadence).toBe('91 rpm');
     });
 });
