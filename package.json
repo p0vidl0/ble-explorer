@@ -5,7 +5,7 @@
   "description": "Standalone BLE supported devices page",
   "scripts": {
     "start": "parcel src/index.html",
-    "build": "parcel build src/index.html",
+    "build": "parcel build src/index.html --public-url ./",
     "test": "vitest run",
     "test:watch": "vitest"
   },
