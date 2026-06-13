@@ -4,12 +4,15 @@
   "version": "0.1.0",
   "description": "Standalone BLE supported devices page",
   "scripts": {
+    "icons": "node scripts/gen-pwa-icons.mjs",
     "start": "parcel src/index.html",
     "build": "parcel build src/index.html --public-url ./",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
+    "@parcel/packager-raw-url": "2.16.4",
+    "@parcel/service-worker": "^2.16.4",
     "@parcel/transformer-webmanifest": "^2.12.0",
     "parcel": "^2.12.0",
     "vitest": "^3.2.4"

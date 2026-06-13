@@ -8,6 +8,12 @@ importers:
 
   .:
     devDependencies:
+      '@parcel/packager-raw-url':
+        specifier: 2.16.4
+        version: 2.16.4(@parcel/core@2.16.4(@swc/helpers@0.5.21))
+      '@parcel/service-worker':
+        specifier: ^2.16.4
+        version: 2.16.4
       '@parcel/transformer-webmanifest':
         specifier: ^2.12.0
         version: 2.16.4(@parcel/core@2.16.4(@swc/helpers@0.5.21))
@@ -358,6 +364,10 @@ packages:
     resolution: {integrity: sha512-L2o39f/fhta+hxto7w8OTUKdstY+te5BmHZREckbQm0KTBg93BG7jB0bfoxLSZF0d8uuAYIVXjzeHNqha+du1g==}
     engines: {node: '>= 16.0.0', parcel: ^2.16.4}
 
+  '@parcel/packager-raw-url@2.16.4':
+    resolution: {integrity: sha512-qrpsz/wTlPvYM5qnz3N+3pW0a9MRivrN7TiduoS1W1U/UBhsPoOYNG+S6F67KDCmq47mmBKTgEFN9tEazSV+Qw==}
+    engines: {node: '>= 16.0.0', parcel: ^2.16.4}
+
   '@parcel/packager-raw@2.16.4':
     resolution: {integrity: sha512-A9j60G9OmbTkEeE4WRMXCiErEprHLs9NkUlC4HXCxmSrPMOVaMaMva2LdejE3A9kujZqYtYfuc8+a+jN+Nro4w==}
     engines: {node: '>= 16.0.0', parcel: ^2.16.4}
@@ -470,6 +480,10 @@ packages:
     peerDependenciesMeta:
       napi-wasm:
         optional: true
+
+  '@parcel/service-worker@2.16.4':
+    resolution: {integrity: sha512-VCTFi4eWh/5Fxi7oiVqNQRNSIJhTdQVc4cO8hWg3FF8VURIkOjYFaWNp/1HAjkdb3CxiA5E9UBTDmll329IrNA==}
+    engines: {node: '>= 16.0.0', parcel: ^2.16.4}
 
   '@parcel/source-map@2.1.1':
     resolution: {integrity: sha512-Ejx1P/mj+kMjQb8/y5XxDUn4reGdr+WyKYloBljpppUy8gs42T+BNoEOuRYqDVdgPc6NxduzIDoJS9pOFfV5Ew==}
@@ -1771,6 +1785,14 @@ snapshots:
       - '@parcel/core'
       - napi-wasm
 
+  '@parcel/packager-raw-url@2.16.4(@parcel/core@2.16.4(@swc/helpers@0.5.21))':
+    dependencies:
+      '@parcel/plugin': 2.16.4(@parcel/core@2.16.4(@swc/helpers@0.5.21))
+      '@parcel/utils': 2.16.4
+    transitivePeerDependencies:
+      - '@parcel/core'
+      - napi-wasm
+
   '@parcel/packager-raw@2.16.4(@parcel/core@2.16.4(@swc/helpers@0.5.21))':
     dependencies:
       '@parcel/plugin': 2.16.4(@parcel/core@2.16.4(@swc/helpers@0.5.21))
@@ -1919,6 +1941,8 @@ snapshots:
       '@parcel/rust-linux-x64-gnu': 2.16.4
       '@parcel/rust-linux-x64-musl': 2.16.4
       '@parcel/rust-win32-x64-msvc': 2.16.4
+
+  '@parcel/service-worker@2.16.4': {}
 
   '@parcel/source-map@2.1.1':
     dependencies:
